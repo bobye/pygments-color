@@ -91,8 +91,8 @@ class AITokenFormatter(Formatter):
         flush()
 
 import random
-def rand():
-    return '#%02x%02x%02x' % (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+def randHex():
+    return '#%02x%02x%02x' % (random.randint(100,255), random.randint(100,255), random.randint(100,255))
 
 
 from pygments.style import Style
@@ -102,17 +102,13 @@ from pygments.token import Keyword, Name, Comment, String, Error, \
 class YourStyle(Style):
     background_color = "#000"
     default_style = ""
-    styles = {
-        Comment:                'italic ' + rand(),
-        Keyword:                'bold ' + rand(),
-        Name:                   rand(),
-        Name.Function:          rand(),
-        Name.Class:             'bold ' + rand(),
-        String:                 rand(),
-        String.Doc:             'italic ' + rand(),
-        Generic:                rand(),
-        Text:                   rand()
-    }
+    def generated_random_styles(st):
+        dict = st.copy()
+        for name, val in dict.items():
+            dict[name] = randHex()
+        return dict
+
+    styles = generated_random_styles(STANDARD_TYPES)
 
 
 import os
