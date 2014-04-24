@@ -114,7 +114,7 @@ class YourStyle(Style):
 import os
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
 def main():
-    filename = "codeSample.py"
+    filename = "codeSamples/codeSample.py"
     codeSampleFile = open(filename,'r')
     codeSample = codeSampleFile.read()
     codeSampleFile.close()
