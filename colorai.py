@@ -103,7 +103,7 @@ def toHex(colorDict):
     return hexcd
 
 
-class RandomStyle(Style):
+class RandomStyleBlack(Style):
     background_color = "#000"
     default_style = ""
 
@@ -112,6 +112,19 @@ class RandomStyle(Style):
         dict = st.copy()
         for name, val in dict.items():
             dict[name] = (random.randint(100,255), random.randint(100,255), random.randint(100,255))
+        return toHex(dict)
+
+    styles = generated_random_styles(STANDARD_TYPES)
+
+class RandomStyleWhite(Style):
+    background_color = "#fff"
+    default_style = ""
+
+
+    def generated_random_styles(st):
+        dict = st.copy()
+        for name, val in dict.items():
+            dict[name] = (random.randint(0,155), random.randint(0,155), random.randint(0,155))
         return toHex(dict)
 
     styles = generated_random_styles(STANDARD_TYPES)
@@ -134,7 +147,7 @@ def main():
 
 
     renderHtmlFile = open('out.html','w')
-    print highlight(codeSample, lexer2, HtmlFormatter(full="True", style=RandomStyle), renderHtmlFile)
+    print highlight(codeSample, lexer2, HtmlFormatter(full="True", style=RandomStyleBlack), renderHtmlFile)
     renderHtmlFile.close()
     os.system("open out.html")
 
