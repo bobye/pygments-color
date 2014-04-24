@@ -90,25 +90,53 @@ class AITokenFormatter(Formatter):
                 write("%s\t%r\n" % (ttype, value))
         flush()
 
+import random
+def rand():
+    return '#%02x%02x%02x' % (random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
 
+from pygments.style import Style
+from pygments.token import Keyword, Name, Comment, String, Error, \
+     Number, Operator, Generic, Text, STANDARD_TYPES
 
+class YourStyle(Style):
+    background_color = "#000"
+    default_style = ""
+    styles = {
+        Comment:                'italic ' + rand(),
+        Keyword:                'bold ' + rand(),
+        Name:                   rand(),
+        Name.Function:          rand(),
+        Name.Class:             'bold ' + rand(),
+        String:                 rand(),
+        String.Doc:             'italic ' + rand(),
+        Generic:                rand(),
+        Text:                   rand()
+    }
+
+
+import os
+from pygments.lexers import guess_lexer, guess_lexer_for_filename
 def main():
-    codeSampleFile = open('codeSample.py','r')
+    filename = "codeSample.py"
+    codeSampleFile = open(filename,'r')
     codeSample = codeSampleFile.read()
     codeSampleFile.close()
 
-    lexer = PythonLexer()
+##    lexer = PythonLexer()
+    lexer = guess_lexer_for_filename(filename, codeSample)
+    lexer2 = guess_lexer_for_filename(filename, codeSample)
+
     lexer.add_filter(VisibleWhitespaceFilter())
-
-
     print highlight(codeSample, lexer, AITokenFormatter())
 
 
     renderHtmlFile = open('out.html','w')
-    print highlight(codeSample, PythonLexer(), HtmlFormatter(full="True"), renderHtmlFile)
+    print highlight(codeSample, lexer2, HtmlFormatter(full="True", style=YourStyle), renderHtmlFile)
     renderHtmlFile.close()
+    os.system("open out.html")
 
 if __name__ == "__main__":
     main()
+
 
