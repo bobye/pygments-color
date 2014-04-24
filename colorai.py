@@ -90,23 +90,29 @@ class AITokenFormatter(Formatter):
                 write("%s\t%r\n" % (ttype, value))
         flush()
 
+
 import random
-def randHex():
-    return '#%02x%02x%02x' % (random.randint(100,255), random.randint(100,255), random.randint(100,255))
-
-
 from pygments.style import Style
 from pygments.token import Keyword, Name, Comment, String, Error, \
      Number, Operator, Generic, Text, STANDARD_TYPES
 
-class YourStyle(Style):
+def toHex(colorDict):
+    hexcd = colorDict.copy()
+    for name, val in colorDict.items():
+        hexcd[name] = '#%02x%02x%02x' % colorDict[name]
+    return hexcd
+
+
+class RandomStyle(Style):
     background_color = "#000"
     default_style = ""
+
+
     def generated_random_styles(st):
         dict = st.copy()
         for name, val in dict.items():
-            dict[name] = randHex()
-        return dict
+            dict[name] = (random.randint(100,255), random.randint(100,255), random.randint(100,255))
+        return toHex(dict)
 
     styles = generated_random_styles(STANDARD_TYPES)
 
@@ -128,7 +134,7 @@ def main():
 
 
     renderHtmlFile = open('out.html','w')
-    print highlight(codeSample, lexer2, HtmlFormatter(full="True", style=YourStyle), renderHtmlFile)
+    print highlight(codeSample, lexer2, HtmlFormatter(full="True", style=RandomStyle), renderHtmlFile)
     renderHtmlFile.close()
     os.system("open out.html")
 
