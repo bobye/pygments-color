@@ -90,15 +90,17 @@ class AITokenFormatter(Formatter):
                     write(line)
         else:
             for ttype, value in tokensource:
-                write("%s\t%r\n" % (ttype, value))                
-                TOKEN_DICT[ttype] = 1 ## just insert a key
+                #write("%s\t%r\n" % (ttype, value)) 
+                if ttype in TOKEN_DICT:
+                    TOKEN_DICT[ttype] = (TOKEN_DICT[ttype][0] + len(value), TOKEN_DICT[ttype][1] + 1)
+                else: 
+                    TOKEN_DICT[ttype] = (len(value), 1)
+                
         flush()
 
 
-import random
 from pygments.style import Style
-from pygments.token import Keyword, Name, Comment, String, Error, \
-     Number, Operator, Generic, Text, STANDARD_TYPES
+from pygments.token import STANDARD_TYPES
 
 def toHex(colorDict):
     hexcd = colorDict.copy()
@@ -113,8 +115,9 @@ class RandomStyleBlack(Style):
 
 
     def generate_random_styles(st):
+        import random
         dict = st.copy()
-        for name, val in dict.items():
+        for name in dict.keys():
             dict[name] = (random.randint(100,255), random.randint(100,255), random.randint(100,255))
         return toHex(dict)
 
@@ -126,8 +129,9 @@ class RandomStyleWhite(Style):
 
 
     def generate_random_styles(st):
+        import random
         dict = st.copy()
-        for name, val in dict.items():
+        for name in dict.keys():
             dict[name] = (random.randint(0,155), random.randint(0,155), random.randint(0,155))
         return toHex(dict)
 
@@ -136,10 +140,11 @@ class RandomStyleWhite(Style):
 def make_MRFStyle(TD):
     background_color_tuple = (0,0,0) 
 
-    def generate_mcmc_styles(st):
+    def generate_mcmc_styles(st, bgColor):
         ## initialization
+        import random
         dict = st.copy()
-        for name, val in dict.items():
+        for name in dict.keys():
             dict[name] = (random.randint(100,255), random.randint(100,255), random.randint(100,255))
         ## mcmc sampling
             
@@ -149,7 +154,7 @@ def make_MRFStyle(TD):
     class MRFStyle(Style):
         background_color = '#%02x%02x%02x' % background_color_tuple
         default_style = ""
-        styles = generate_mcmc_styles(TD)
+        styles = generate_mcmc_styles(TD, background_color_tuple)
 
 
     return MRFStyle
@@ -158,21 +163,24 @@ def make_MRFStyle(TD):
 import os
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
 def main():
-    filename = "codeSamples/codeSample.py"
+    filename = __file__
     codeSampleFile = open(filename,'r')
     codeSample = codeSampleFile.read()
     codeSampleFile.close()
 
-##    lexer = PythonLexer()
     lexer = guess_lexer_for_filename(filename, codeSample)
     lexer2 = guess_lexer_for_filename(filename, codeSample)
 
     lexer.add_filter(VisibleWhitespaceFilter())
-    print highlight(codeSample, lexer, AITokenFormatter())
-
+    highlight(codeSample, lexer, AITokenFormatter())
+    
+    import csv
+    w = csv.writer(open("out.csv", "w"))
+    for key, val in TOKEN_DICT.items():
+        w.writerow([key, val])
 
     renderHtmlFile = open('out.html','w')
-    print highlight(codeSample, lexer2, HtmlFormatter(full="True", style=make_MRFStyle(TOKEN_DICT)), renderHtmlFile)
+    highlight(codeSample, lexer2, HtmlFormatter(full="True", style=make_MRFStyle(TOKEN_DICT)), renderHtmlFile)
     renderHtmlFile.close()
     os.system("open out.html")
 
