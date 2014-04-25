@@ -10,7 +10,8 @@ from pygments.console import colorize
 
 
 TOKEN_DICT = {}
-
+TOKEND_DICT = {}
+TOKENS_DICT = {}
 ## Taken from source code of pygments, change RawTokenFormatter() to AITokenFormatter()
 class AITokenFormatter(Formatter):
     r"""
@@ -89,12 +90,53 @@ class AITokenFormatter(Formatter):
                 else:
                     write(line)
         else:
+            pttype = None
+            pvalue = None
+            pdict = {}
             for ttype, value in tokensource:
                 #write("%s\t%r\n" % (ttype, value)) 
+
+                pdict[ttype] = 1 # check the presence of ttype of current line
+
                 if ttype in TOKEN_DICT:
-                    TOKEN_DICT[ttype] = (TOKEN_DICT[ttype][0] + len(value), TOKEN_DICT[ttype][1] + 1)
+                    TOKEN_DICT[ttype] = (TOKEN_DICT[ttype][0] + len(value), TOKEN_DICT[ttype][1])
                 else: 
-                    TOKEN_DICT[ttype] = (len(value), 1)
+                    TOKEN_DICT[ttype] = (len(value), 0)
+
+                from pygments.token import Token
+                
+                if ttype == Token.Text.Whitespace:
+                    if value == '\n':
+                        if pttype is not None:
+                            if pttype in TOKENS_DICT:
+                                TOKENS_DICT[pttype].append(len(pvalue))
+                            else:
+                                TOKENS_DICT[pttype] = [len(pvalue)]                        
+                        pttype = None
+                        pvalue = None
+                        for ttype in pdict:
+                            TOKEN_DICT[ttype] = (TOKEN_DICT[ttype][0], TOKEN_DICT[ttype][1] + 1)
+                        pdict = {}
+                    continue
+
+                if pttype is None:
+                    pttype = ttype
+                    pvalue = value
+                    continue
+                    
+                if pttype == ttype:
+                    pvalue = pvalue + value
+                else:
+                    if (pttype, ttype) in TOKEND_DICT:
+                        TOKEND_DICT[(pttype, ttype)].append((len(pvalue), len(value)))
+                    else:
+                        TOKEND_DICT[(pttype, ttype)] = [(len(pvalue), len(value))]
+
+                    if pttype in TOKENS_DICT:
+                        TOKENS_DICT[pttype].append(len(pvalue))
+                    else:
+                        TOKENS_DICT[pttype] = [len(pvalue)]
+                    pttype = ttype
                 
         flush()
 
@@ -174,10 +216,20 @@ def main():
     lexer.add_filter(VisibleWhitespaceFilter())
     highlight(codeSample, lexer, AITokenFormatter())
     
-    import csv
-    w = csv.writer(open("out.csv", "w"))
-    for key, val in TOKEN_DICT.items():
-        w.writerow([key, val])
+    DataUnary = {}
+    DataPair = {}
+    for key, val in TOKENS_DICT.items():
+        DataUnary[str(key)] = (TOKEN_DICT[key][0], TOKEN_DICT[key][1], TOKENS_DICT[key])
+    for key, val in TOKEND_DICT.items():
+        DataPair[str(key)] = val
+        
+    Data = {'unary': DataUnary, 'pair': DataPair}
+
+    import json
+    dataString = json.dumps(Data)
+    fileoutput = open('out.json','w+')
+    fileoutput.write(dataString)
+    fileoutput.close()
 
     renderHtmlFile = open('out.html','w')
     highlight(codeSample, lexer2, HtmlFormatter(full="True", style=make_MRFStyle(TOKEN_DICT)), renderHtmlFile)
