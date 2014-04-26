@@ -1,12 +1,8 @@
-
-import scala.collection.mutable._  
-
-case class customException(smth:String) extends Exception(smth)
-
 package highlight.color {
 object ColorFactor extends App {
   /*************************************************************************************************/
   // Load Raw Data, and compute necessary data structure
+  import scala.collection.mutable._  
   import spray.json._
   import DefaultJsonProtocol._ // !!! IMPORTANT, else `convertTo` and `toJson` won't work correctly  
   import scala.io.Source
@@ -20,6 +16,7 @@ object ColorFactor extends App {
   val pairMap = jsAST.asJsObject.getFields("pair")(0).asJsObject.fields
   val tokenKeys = unaryMap.keys
   
+  case class customException(smth:String) extends Exception(smth)
   
   def parent(v:String): String = {  
     if (v == "") throw new customException("Null Node")
@@ -44,8 +41,9 @@ object ColorFactor extends App {
   import scala.math._
   import cc.factorie.infer._
   // Create variables
-  class Color(var v: (Double, Double, Double)) {
+  case class Color(var v: (Double, Double, Double)) {
     override def toString() = v.toString()
+    def toInt(): (Int, Int, Int) = ((v._1*255).toInt, (v._2*255).toInt, (v._3*255).toInt)
   }
   final var randomGenerator = new scala.util.Random
   def randomColor(): Color = new Color((randomGenerator.nextDouble,randomGenerator.nextDouble,randomGenerator.nextDouble))
@@ -76,12 +74,12 @@ object ColorFactor extends App {
   	    m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => sin(x * 2.0))
   	  }
       if (key != "Token") {
-        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => -(x-3)*(x-3)/5)
+        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => -(x-3)*(x-3))
       }
   })
   
   
-  println(m1.currentScore(colorSeqOfVars))
+  println("origScore: " + m1.currentScore(colorSeqOfVars))
   
   // Create Sampler
   final var randomGenerator2 = new scala.util.Random
@@ -95,10 +93,16 @@ object ColorFactor extends App {
   }
   
   val sampler = new MHColorSampler(m1)
-  sampler.processAll(colorSeqOfVars, 100)
-  println(m1.currentScore(colorSeqOfVars))
-  println(colorVars("Token"))
+  sampler.processAll(colorSeqOfVars, 1000)
+  println("modelScore: " + m1.currentScore(colorSeqOfVars))
+  //println(colorVars)
   
+  // Output color theme
+  val jColorAST = colorVars.mapValues(_.value.toInt).toMap.toJson
+  import java.io._
+  val writeTheme = new PrintWriter(new File("../theme.json"))
+  writeTheme.write(jColorAST.prettyPrint)
+  writeTheme.close()
   
   
 }

@@ -142,7 +142,7 @@ class AITokenFormatter(Formatter):
 
 
 from pygments.style import Style
-from pygments.token import STANDARD_TYPES
+from pygments.token import STANDARD_TYPES, string_to_tokentype
 
 def toHex(colorDict):
     hexcd = colorDict.copy()
@@ -179,24 +179,23 @@ class RandomStyleWhite(Style):
 
     styles = generate_random_styles(STANDARD_TYPES)
 
-def make_MRFStyle(TD):
+def make_MRFStyle():
     background_color_tuple = (0,0,0) 
 
-    def generate_mcmc_styles(st, bgColor):
-        ## initialization
-        import random
-        dict = st.copy()
-        for name in dict.keys():
-            dict[name] = (random.randint(100,255), random.randint(100,255), random.randint(100,255))
-        ## mcmc sampling
-            
+    def load_json_styles(bgColor):
+        import json
+        themeFile = open("theme.json",'r')
+        jColorTheme = json.load(themeFile)        
+        themeFile.close()
+        jColorThemeTuple = {string_to_tokentype(k):tuple(v) for k, v in jColorTheme.items()}
+        background_color_tuple = jColorThemeTuple[Token]
         ## output
-        return toHex(dict)
+        return toHex(jColorThemeTuple)
 
     class MRFStyle(Style):
-        background_color = '#%02x%02x%02x' % background_color_tuple
         default_style = ""
-        styles = generate_mcmc_styles(TD, background_color_tuple)
+        styles = load_json_styles(background_color_tuple)
+        background_color = '#%02x%02x%02x' % background_color_tuple
 
 
     return MRFStyle
@@ -231,12 +230,19 @@ def main():
     fileoutput.write(dataString)
     fileoutput.close()
 
+    os.system("cd color; java -jar target/color-*-SNAPSHOT.jar; cd ..")
+
     renderHtmlFile = open('out.html','w')
-    highlight(codeSample, lexer2, HtmlFormatter(full="True", style=make_MRFStyle(TOKEN_DICT)), renderHtmlFile)
+    highlight(codeSample, lexer2, HtmlFormatter(full="True", style=make_MRFStyle()), renderHtmlFile)
     renderHtmlFile.close()
     os.system("open out.html")
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
 
 
