@@ -32,6 +32,14 @@ object ColorFactor extends App {
   tokenKeys.map(addTo(colorKeys, _))
   //println(colorKeys)
   
+  val tokenFeats = Map[String, Any]()
+  tokenKeys.map(key => tokenFeats += key -> {
+    val raw = unaryMap(key)
+    raw
+  })
+  
+  println(tokenFeats)
+  
   /*************************************************************************************************/
   // Create factor graph
   import cc.factorie._
@@ -54,8 +62,10 @@ object ColorFactor extends App {
   // Create factors
   class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, f: Double => Double) extends Factor2(c1, c2) {
     def score(v1: Color, v2: Color): Double = {
-      //val sqr: Double => Double = x => x*x
-      val d = abs(v1.v._1 - v2.v._1) + abs(v1.v._2 - v2.v._2) + abs(v1.v._3 - v2.v._3)
+      val v1_Lab = v1.toLab()
+      val v2_Lab = v2.toLab() 
+      
+      val d = (pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
       f(d)
     }
     override def factorName = "ColorFactor"

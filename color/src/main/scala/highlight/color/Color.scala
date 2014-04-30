@@ -9,6 +9,7 @@ case class Color(var v: (Double, Double, Double)) {
     override def toString() = v.toString()
     def toInt(): (Int, Int, Int) = ((r*255).toInt, (g*255).toInt, (b*255).toInt)
     def toLab(): (Double, Double, Double) = {
+      // Reference: http://www.easyrgb.com/index.php?X=MATH
       // RGB to XYZ
       var var_R: Double = r
       var var_G: Double = g

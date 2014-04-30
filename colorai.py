@@ -94,8 +94,6 @@ class AITokenFormatter(Formatter):
             pvalue = None
             pdict = {}
             for ttype, value in tokensource:
-                #write("%s\t%r\n" % (ttype, value)) 
-
                 pdict[ttype] = 1 # check the presence of ttype of current line
 
                 if ttype in TOKEN_DICT:
@@ -118,6 +116,9 @@ class AITokenFormatter(Formatter):
                             TOKEN_DICT[ttype] = (TOKEN_DICT[ttype][0], TOKEN_DICT[ttype][1] + 1)
                         pdict = {}
                     continue
+                #else:
+                #    print (ttype, value)
+
 
                 if pttype is None:
                     pttype = ttype
@@ -137,7 +138,7 @@ class AITokenFormatter(Formatter):
                     else:
                         TOKENS_DICT[pttype] = [len(pvalue)]
                     pttype = ttype
-                
+                    pvalue = value
         flush()
 
 
