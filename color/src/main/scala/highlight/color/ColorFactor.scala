@@ -41,10 +41,6 @@ object ColorFactor extends App {
   import scala.math._
   import cc.factorie.infer._
   // Create variables
-  case class Color(var v: (Double, Double, Double)) {
-    override def toString() = v.toString()
-    def toInt(): (Int, Int, Int) = ((v._1*255).toInt, (v._2*255).toInt, (v._3*255).toInt)
-  }
   final var randomGenerator = new scala.util.Random
   def randomColor(): Color = new Color((randomGenerator.nextDouble,randomGenerator.nextDouble,randomGenerator.nextDouble))
   class ColorVariable(v: Color) extends RefVariable[Color](v) 
