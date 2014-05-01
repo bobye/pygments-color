@@ -15,6 +15,7 @@ object ColorFactor extends App {
   val unaryMap = jsAST.asJsObject.getFields("unary")(0).asJsObject.fields
   val pairMap = jsAST.asJsObject.getFields("pair")(0).asJsObject.fields
   val tokenKeys = unaryMap.keys
+  val pairKeys = pairMap.keys
   
   case class customException(smth:String) extends Exception(smth)
   
@@ -32,13 +33,22 @@ object ColorFactor extends App {
   tokenKeys.map(addTo(colorKeys, _))
   //println(colorKeys)
   
-  val tokenFeats = Map[String, Any]()
+  val tokenFeats = Map[String, List[Double]]()
   tokenKeys.map(key => tokenFeats += key -> {
     val raw = unaryMap(key)
-    raw
-  })
+    raw.convertTo[List[Double]]
+  })  
+  //println(tokenFeats.toSeq.sortBy( - _._2(0)))
   
-  println(tokenFeats)
+  val pairFeats = Map[String, List[Double]]()
+  pairKeys.map(key => pairFeats += key -> {
+    val raw = pairMap(key)
+    val l = raw.convertTo[List[(Int, Int)]]
+    val num = l.length
+    val avg = l.reduce((v1,v2) => (v1._1 + v2._1, v1._2 + v2._2))
+    List(num, avg._1.toDouble/num, avg._2.toDouble/num)
+  })
+  //println(pairFeats.toSeq.sortBy(- _._2(0)))
   
   /*************************************************************************************************/
   // Create factor graph
@@ -65,7 +75,7 @@ object ColorFactor extends App {
       val v1_Lab = v1.toLab()
       val v2_Lab = v2.toLab() 
       
-      val d = (pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
+      val d = pow(v1_Lab._1 - v2_Lab._1, 2) / 10000 //(pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
       f(d)
     }
     override def factorName = "ColorFactor"
@@ -74,13 +84,28 @@ object ColorFactor extends App {
   
   // Create model
   val m1 = new ItemizedModel  
+  
+  def CNDF(xInput:Double): Double = {
+    var x = xInput
+    val neg: Int = if (x < 0d) 1 else 0;
+    if ( neg == 1d) 
+        x = x * -1;
+
+    var k:Double = (1d / ( 1d + 0.2316419 * x));
+    var y:Double = (((( 1.330274429 * k - 1.821255978) * k + 1.781477937) *
+                   k - 0.356563782) * k + 0.319381530) * k;
+    y = 1.0 - 0.398942280401 * exp(-0.5 * x * x) * y;
+
+    return (1d - neg) * y + neg * (1d - y);    
+  }
+  
   colorKeys.map({key =>
       val pKey = parent(key)
   	  if (key != "Token" || pKey != "Token") {
-  	    m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => sin(x * 2.0))
+  	    m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => 0 * sin(x * 2.0))
   	  }
       if (key != "Token") {
-        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => -(x-3)*(x-3))
+        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => log(CNDF((x-0.4)/0.05)+1E-6))
       }
   })
   

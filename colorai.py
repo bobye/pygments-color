@@ -202,8 +202,9 @@ def make_MRFStyle():
     return MRFStyle
 
     
-import os
+import os 
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
+
 def main():
     filename = __file__
     codeSampleFile = open(filename,'r')
@@ -219,7 +220,9 @@ def main():
     DataUnary = {}
     DataPair = {}
     for key, val in TOKENS_DICT.items():
-        DataUnary[str(key)] = (TOKEN_DICT[key][0], TOKEN_DICT[key][1], TOKENS_DICT[key])
+        import numpy, math
+        arrayOfTokens = TOKENS_DICT[key]
+        DataUnary[str(key)] = (math.log(TOKEN_DICT[key][0])/math.log(2), TOKEN_DICT[key][1], numpy.mean(arrayOfTokens), numpy.median(arrayOfTokens), numpy.std(arrayOfTokens))
     for key, val in TOKEND_DICT.items():
         DataPair[str(key)] = val
         
