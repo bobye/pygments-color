@@ -69,17 +69,18 @@ object ColorFactor extends App {
   
   val colorVars =  Map[String, ColorVariable]()
   colorKeys.map(colorVars += _ -> new ColorVariable(randomColor()))
+  
+  colorVars += "Token" -> new ColorVariable(randomColor()) // background
   val colorSeqOfVars = colorVars.map{case (k,v) => v}(collection.breakOut) // without background
-  colorVars += "Token" -> new ColorVariable(new Color((0.0,0.0,0.0))) // background
   
   
   // Create factors
   class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, f: Double => Double) extends Factor2(c1, c2) {
     def score(v1: Color, v2: Color): Double = {
-      val v1_YIQ = v1.toYIQ()
-      val v2_YIQ = v2.toYIQ() 
+      val v1_Lab = v1.toLab()
+      val v2_Lab = v2.toLab()
       
-      val d = abs(v1_YIQ._1 - v2_YIQ._1) //(pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
+      val d = abs(v1_Lab._1 - v2_Lab._1)/100.0 //(pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
       f(d)
     }
     override def factorName = "ColorFactor"
