@@ -75,12 +75,12 @@ object ColorFactor extends App {
   
   
   // Create factors
-  class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, f: Double => Double) extends Factor2(c1, c2) {
+  class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, f: ((Double, Double, Double)) => Double) extends Factor2(c1, c2) {
     def score(v1: Color, v2: Color): Double = {
       val v1_Lab = v1.toLab()
       val v2_Lab = v2.toLab()
       
-      val d = abs(v1_Lab._1 - v2_Lab._1)/100.0 //(pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
+      val d = ((v1_Lab._1 - v2_Lab._1)/100.0, (v1_Lab._2 - v2_Lab._2)/128.0,  (v1_Lab._3 - v2_Lab._3)/128.0) 
       f(d)
     }
     override def factorName = "ColorFactor"
@@ -110,7 +110,7 @@ object ColorFactor extends App {
   	  //  m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => 0.0 )
   	  //}
       if (key != "Token") {
-        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => scala.math.log(CNDF((x-0.6)/0.03)+1E-6))
+        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => log(CNDF((abs(x._1)-0.6)/0.03)+1E-6))
       }
   })
   
