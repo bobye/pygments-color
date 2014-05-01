@@ -59,23 +59,27 @@ object ColorFactor extends App {
   import scala.math._
   import cc.factorie.infer._
   // Create variables
-  final var randomGenerator = new scala.util.Random
-  def randomColor(): Color = new Color((randomGenerator.nextDouble,randomGenerator.nextDouble,randomGenerator.nextDouble))
+  final val randomGenerator1 = new scala.util.Random
+  final val randomGenerator2 = new scala.util.Random
+  final val randomGenerator3 = new scala.util.Random
+  def randomColor(): Color = {
+    new Color((randomGenerator1.nextDouble,randomGenerator2.nextDouble,randomGenerator3.nextDouble))
+  }
   class ColorVariable(v: Color) extends RefVariable[Color](v) 
   
   val colorVars =  Map[String, ColorVariable]()
   colorKeys.map(colorVars += _ -> new ColorVariable(randomColor()))
   val colorSeqOfVars = colorVars.map{case (k,v) => v}(collection.breakOut) // without background
-  colorVars += "Token" -> new ColorVariable(new Color((0,0,0))) // background
+  colorVars += "Token" -> new ColorVariable(new Color((0.0,0.0,0.0))) // background
   
   
   // Create factors
   class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, f: Double => Double) extends Factor2(c1, c2) {
     def score(v1: Color, v2: Color): Double = {
-      val v1_Lab = v1.toLab()
-      val v2_Lab = v2.toLab() 
+      val v1_YIQ = v1.toYIQ()
+      val v2_YIQ = v2.toYIQ() 
       
-      val d = pow(v1_Lab._1 - v2_Lab._1, 2) / 10000 //(pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
+      val d = abs(v1_YIQ._1 - v2_YIQ._1) //(pow(v1_Lab._1 - v2_Lab._1, 2) + pow(v1_Lab._2 - v2_Lab._2, 2) + pow(v1_Lab._3 - v2_Lab._3, 2))/10000 
       f(d)
     }
     override def factorName = "ColorFactor"
@@ -87,25 +91,25 @@ object ColorFactor extends App {
   
   def CNDF(xInput:Double): Double = {
     var x = xInput
-    val neg: Int = if (x < 0d) 1 else 0;
-    if ( neg == 1d) 
+    val neg: Int = if (x < 0) 1 else 0;
+    if ( neg == 1) 
         x = x * -1;
 
-    var k:Double = (1d / ( 1d + 0.2316419 * x));
+    var k:Double = (1 / ( 1 + 0.2316419 * x));
     var y:Double = (((( 1.330274429 * k - 1.821255978) * k + 1.781477937) *
                    k - 0.356563782) * k + 0.319381530) * k;
     y = 1.0 - 0.398942280401 * exp(-0.5 * x * x) * y;
 
-    return (1d - neg) * y + neg * (1d - y);    
+    return (1.0 - neg) * y + neg * (1.0 - y);    
   }
   
   colorKeys.map({key =>
       val pKey = parent(key)
-  	  if (key != "Token" || pKey != "Token") {
-  	    m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => 0 * sin(x * 2.0))
-  	  }
+  	  //if (key != "Token" && pKey != "Token") {
+  	  //  m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => 0.0 )
+  	  //}
       if (key != "Token") {
-        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => log(CNDF((x-0.4)/0.05)+1E-6))
+        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => scala.math.log(CNDF((x-0.6)/0.03)+1E-6))
       }
   })
   
@@ -113,8 +117,7 @@ object ColorFactor extends App {
   println("origScore: " + m1.currentScore(colorSeqOfVars))
   
   // Create Sampler
-  final var randomGenerator2 = new scala.util.Random
-  class MHColorSampler(model: Model) extends MHSampler[ColorVariable](model)(randomGenerator2) {
+  class MHColorSampler(model: Model) extends MHSampler[ColorVariable](model)(new scala.util.Random) {
     def propose(context:ColorVariable)(implicit d:DiffList) : Double = {
       val origScore = model.currentScore(context)
       context.set(randomColor())(d)
@@ -126,7 +129,7 @@ object ColorFactor extends App {
   val sampler = new MHColorSampler(m1)
   sampler.processAll(colorSeqOfVars, 1000)
   println("modelScore: " + m1.currentScore(colorSeqOfVars))
-  //println(colorVars)
+  //println(colorVars.map(t => t._1 -> (m1.currentScore(t._2), t._2.value.toYIQ._1)))
   
   // Output color theme
   val jColorAST = colorVars.mapValues(_.value.toInt).toMap.toJson

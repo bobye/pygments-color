@@ -52,4 +52,10 @@ case class Color(var v: (Double, Double, Double)) {
       (CIE_L, CIE_a, CIE_b)
 
     }
+    def toYIQ(): (Double, Double, Double) = {
+      val Y = 0.299 * r + 0.587 * g + 0.114 * b
+      val I = 0.596 * r - 0.275 * g - 0.321 * b
+      val Q = 0.212 * r - 0.523 * g + 0.311 * b
+      (Y, I, Q)
+    }
 }

@@ -181,9 +181,9 @@ class RandomStyleWhite(Style):
     styles = generate_random_styles(STANDARD_TYPES)
 
 def make_MRFStyle():
-    background_color_tuple = (0,0,0) 
+#    background_color_tuple = (0,0,0) 
 
-    def load_json_styles(bgColor):
+    def load_json_styles():
         import json
         themeFile = open("theme.json",'r')
         jColorTheme = json.load(themeFile)        
@@ -195,8 +195,8 @@ def make_MRFStyle():
 
     class MRFStyle(Style):
         default_style = ""
-        styles = load_json_styles(background_color_tuple)
-        background_color = '#%02x%02x%02x' % background_color_tuple
+        styles = load_json_styles()
+        background_color = styles[Token] #'#%02x%02x%02x' % background_color_tuple
 
 
     return MRFStyle
@@ -221,7 +221,7 @@ def main():
     DataPair = {}
     for key, val in TOKENS_DICT.items():
         import numpy, math
-        arrayOfTokens = TOKENS_DICT[key]
+        arrayOfTokens = numpy.log2(TOKENS_DICT[key])
         DataUnary[str(key)] = (math.log(TOKEN_DICT[key][0])/math.log(2), TOKEN_DICT[key][1], numpy.mean(arrayOfTokens), numpy.median(arrayOfTokens), numpy.std(arrayOfTokens))
     for key, val in TOKEND_DICT.items():
         DataPair[str(key)] = val
@@ -235,9 +235,13 @@ def main():
     fileoutput.close()
 
     os.system("cd color; java -jar target/color-*-SNAPSHOT.jar; cd ..")
+    #import time
+    #time.sleep(1) # wait theme.json to be sync
 
     renderHtmlFile = open('out.html','w')
     highlight(codeSample, lexer2, HtmlFormatter(full="True", style=make_MRFStyle()), renderHtmlFile)
+    #highlight(codeSample, lexer2, HtmlFormatter(full="True", style="vim"), renderHtmlFile)
+
     renderHtmlFile.close()
     os.system("open out.html")
 
