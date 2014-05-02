@@ -96,7 +96,7 @@ object ColorFactor extends App {
     new Color((f(r), f(g), f(b)))
   }
 */
-  class ColorVariable(v: Color) extends RefVariable[Color](v) 
+  
   
   val colorVars =  Map[String, ColorVariable]()
   colorKeys.map(colorVars += _ -> new ColorVariable(randomColor()))
@@ -104,20 +104,6 @@ object ColorFactor extends App {
   colorVars += "Token" -> new ColorVariable(randomColor()) // background
   val colorSeqOfVars = colorVars.map{case (k,v) => v}(collection.breakOut) 
   
-  
-  // Create factors
-  class UnaryColorFactor(c: ColorVariable, m: Color => Double, f: Double => Double) extends Factor1(c) {
-    def score(v: Color): Double = {
-      f(m(v))
-    }
-    override def factorName = "UnaryColorFactor"
-  }
-  class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, m: (Color, Color) => Double, f: Double => Double) extends Factor2(c1, c2) {
-    def score(v1: Color, v2: Color): Double = {
-      f(m(v1, v2))
-    }
-    override def factorName = "PairwiseColorFactor"
-  }
   
   import ColorProperty._
   import Function._
@@ -127,18 +113,21 @@ object ColorFactor extends App {
   
   
   defaultTokenSet.map(key => {
-     m1 ++= new UnaryColorFactor(colorVars(key),
+     m1 += new UnaryColorFactor(colorVars(key),
          saturation,
          x => -x/0.02)
   })
   
   pairFeats.filter(_._2(0) > 0.05).keys.map(key => {
-     m1 ++= new PairwiseColorFactor(colorVars(key._1), colorVars(key._2),
+     m1 += new PairwiseColorFactor(colorVars(key._1), colorVars(key._2),
          chromaticDifference,
          x => -x/0.1)
-     m1 ++= new PairwiseColorFactor(colorVars(key._1), colorVars(key._2),
+     /*
+     m1 += new PairwiseColorFactor(colorVars(key._1), colorVars(key._2),
          relativeLightness,
          x => -x/0.1)
+         * 
+         */
   })
          
   // pairwise
@@ -151,14 +140,14 @@ object ColorFactor extends App {
         var cutoff = 0.5
         if (defaultTokenSet contains key) cutoff = 0.7
         
-        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), 
+        m1 += new PairwiseColorFactor(colorVars(key), colorVars("Token"), 
             relativeLightness, 
             x => log(CNDF((abs(x)-cutoff)/0.03)+1E-10))
         
       }
   })
   
-  
+  //println(m1.factors(colorVars("Token.Name")).size)
   println("origScore: " + m1.currentScore(colorSeqOfVars))
   
   // Create Sampler
