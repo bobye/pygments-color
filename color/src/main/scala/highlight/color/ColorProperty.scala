@@ -9,6 +9,11 @@ object ColorProperty {
     val lab = c.toLab; 
     sqrt(lab._2 * lab._2 + lab._3 * lab._3)/sqrt(lab._1*lab._1 + lab._2*lab._2+lab._3*lab._3)
   }
+  
+  def hue(c: Color): Double = {
+    val lab = c.toLab
+    atan2(lab._3, lab._2)
+  }
 
   def perceptualDifference(c1: Color, c2: Color): Double = {
     val lab1 = c1.toLab; val lab2 = c2.toLab; 

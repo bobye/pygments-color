@@ -199,6 +199,9 @@ def make_MRFStyle():
     class MRFStyle(Style):
         default_style = ""
         styles = load_json_styles()
+        styles[Token.Comment] = styles[Token.Comment] + " italic"
+#        styles[Token.Keyword] = styles[Token.Keyword] + " bold"
+
         background_color = styles[Token] #'#%02x%02x%02x' % background_color_tuple
 
 

@@ -100,9 +100,9 @@ object ColorFactor extends App {
   
   val colorVars =  Map[String, ColorVariable]()
   colorKeys.map(colorVars += _ -> new ColorVariable(randomColor()))
-  
-  colorVars += "Token" -> new ColorVariable(randomColor()) // background
   val colorSeqOfVars = colorVars.map{case (k,v) => v}(collection.breakOut) 
+  colorVars += "Token" -> new ColorVariable(Color.BLACK) // background
+  
   
   
   import ColorProperty._
@@ -133,16 +133,18 @@ object ColorFactor extends App {
   // pairwise
   colorKeys.map({key =>
       val pKey = parent(key)
-  	  //if (key != "Token" && pKey != "Token") {
-  	  //  m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => 0.0 )
-  	  //}
+  	  if (key != "Token" && pKey != "Token") {
+  	    m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), 
+  	        chromaticDifference,
+  	        x => -x/0.2 )
+  	  }
       if (key != "Token") {
         var cutoff = 0.5
         if (defaultTokenSet contains key) cutoff = 0.7
         
         m1 += new PairwiseColorFactor(colorVars(key), colorVars("Token"), 
             relativeLightness, 
-            x => log(CNDF((abs(x)-cutoff)/0.03)+1E-10))
+            x => 10* log(CNDF((abs(x)-cutoff)/0.03)+1E-10))
         
       }
   })

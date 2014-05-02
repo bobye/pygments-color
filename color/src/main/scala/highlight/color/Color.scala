@@ -59,3 +59,8 @@ case class Color(var v: (Double, Double, Double)) {
       (Y, I, Q)
     }
 }
+
+object Color {
+  final def BLACK = Color((0.0,0.0,0.0))
+  final def COLOR = Color((1.0,1.0,1.0))
+}
