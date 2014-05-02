@@ -76,9 +76,11 @@ object ColorFactor extends App {
   import cc.factorie.infer._
   // Create variables
 
+  val randomGenerator1 = new scala.util.Random
+  val randomGenerator2 = new scala.util.Random
+  val randomGenerator3 = new scala.util.Random
   def randomColor(): Color = {
-    val randomGenerator = new scala.util.Random
-    new Color((randomGenerator.nextDouble,randomGenerator.nextDouble,randomGenerator.nextDouble))
+    new Color((randomGenerator1.nextDouble,randomGenerator2.nextDouble,randomGenerator3.nextDouble))
   }
   /*
   def randomColor(c: Color, mu: Double): Color = {
