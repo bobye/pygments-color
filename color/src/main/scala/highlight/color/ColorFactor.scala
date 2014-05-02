@@ -33,12 +33,20 @@ object ColorFactor extends App {
   tokenKeys.map(addTo(colorKeys, _))
   //println(colorKeys)
   
-  val tokenFeats = Map[String, List[Double]]()
-  tokenKeys.map(key => tokenFeats += key -> {
+  val tokenFeatsBuf = Map[String, List[Double]]()
+  tokenKeys.map(key => tokenFeatsBuf += key -> {
     val raw = unaryMap(key)
     raw.convertTo[List[Double]]
   })  
-  //println(tokenFeats.toSeq.sortBy( - _._2(0)))
+  //println(tokenFeatsBuf.toSeq.sortBy( - _._2(0)))
+  val totalNumOfChars = tokenFeatsBuf.map{case (k,v) => v(0)}(collection.breakOut).sum
+  val totalNumOfLines = tokenFeatsBuf("Token")(1)
+  tokenFeatsBuf -= "Token" 
+  //println(totalNumOfChars, totalNumOfLines)
+  val tokenFeats = tokenFeatsBuf.mapValues(l =>
+    List(l(0)/totalNumOfChars, l(1)/totalNumOfLines, l(2), l(3), l(4)))
+  println(tokenFeats.filter(_._2(0) > 0.1).keys)
+  println(tokenFeats.filter(_._2(1) > 0.1).keys)
   
   val pairFeats = Map[String, List[Double]]()
   pairKeys.map(key => pairFeats += key -> {
@@ -56,53 +64,57 @@ object ColorFactor extends App {
   import cc.factorie.la._
   import cc.factorie.variable._
   import cc.factorie.model._
-  import scala.math._
+
   import cc.factorie.infer._
   // Create variables
-  final val randomGenerator1 = new scala.util.Random
-  final val randomGenerator2 = new scala.util.Random
-  final val randomGenerator3 = new scala.util.Random
+
   def randomColor(): Color = {
+    val randomGenerator1 = new scala.util.Random
+    val randomGenerator2 = new scala.util.Random
+    val randomGenerator3 = new scala.util.Random
     new Color((randomGenerator1.nextDouble,randomGenerator2.nextDouble,randomGenerator3.nextDouble))
   }
+  
+  def randomColor(c: Color, mu: Double): Color = {
+    val randomGenerator1 = new scala.util.Random
+    val randomGenerator2 = new scala.util.Random
+    val randomGenerator3 = new scala.util.Random
+    val r = c.r + mu * (randomGenerator1.nextDouble - .5)
+    val g = c.g + mu * (randomGenerator2.nextDouble - .5)
+    val b = c.b + mu * (randomGenerator3.nextDouble - .5)
+    def f(x:Double): Double = { if (x>1) 1; else if (x<0) 0; else x }
+    new Color((f(r), f(g), f(b)))
+  }
+
   class ColorVariable(v: Color) extends RefVariable[Color](v) 
   
   val colorVars =  Map[String, ColorVariable]()
   colorKeys.map(colorVars += _ -> new ColorVariable(randomColor()))
   
   colorVars += "Token" -> new ColorVariable(randomColor()) // background
-  val colorSeqOfVars = colorVars.map{case (k,v) => v}(collection.breakOut) // without background
+  val colorSeqOfVars = colorVars.map{case (k,v) => v}(collection.breakOut) 
   
   
   // Create factors
-  class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, f: ((Double, Double, Double)) => Double) extends Factor2(c1, c2) {
-    def score(v1: Color, v2: Color): Double = {
-      val v1_Lab = v1.toLab()
-      val v2_Lab = v2.toLab()
-      
-      val d = ((v1_Lab._1 - v2_Lab._1)/100.0, (v1_Lab._2 - v2_Lab._2)/128.0,  (v1_Lab._3 - v2_Lab._3)/128.0) 
-      f(d)
+  class UnaryColorFactor(c: ColorVariable, m: Color => Double, f: Double => Double) extends Factor1(c) {
+    def score(v: Color): Double = {
+      f(m(v))
     }
-    override def factorName = "ColorFactor"
+    override def factorName = "UnaryColorFactor"
+  }
+  class PairwiseColorFactor(c1: ColorVariable, c2: ColorVariable, m: (Color, Color) => Double, f: Double => Double) extends Factor2(c1, c2) {
+    def score(v1: Color, v2: Color): Double = {
+      f(m(v1, v2))
+    }
+    override def factorName = "PairwiseColorFactor"
   }
   
-  
+  import ColorProperty._
+  import Function._
   // Create model
   val m1 = new ItemizedModel  
   
-  def CNDF(xInput:Double): Double = {
-    var x = xInput
-    val neg: Int = if (x < 0) 1 else 0;
-    if ( neg == 1) 
-        x = x * -1;
-
-    var k:Double = (1 / ( 1 + 0.2316419 * x));
-    var y:Double = (((( 1.330274429 * k - 1.821255978) * k + 1.781477937) *
-                   k - 0.356563782) * k + 0.319381530) * k;
-    y = 1.0 - 0.398942280401 * exp(-0.5 * x * x) * y;
-
-    return (1.0 - neg) * y + neg * (1.0 - y);    
-  }
+  
   
   colorKeys.map({key =>
       val pKey = parent(key)
@@ -110,7 +122,9 @@ object ColorFactor extends App {
   	  //  m1 ++= new PairwiseColorFactor(colorVars(key), colorVars(pKey), x => 0.0 )
   	  //}
       if (key != "Token") {
-        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), x => log(CNDF((abs(x._1)-0.6)/0.03)+1E-6))
+        m1 ++= new PairwiseColorFactor(colorVars(key), colorVars("Token"), 
+            relativeLightness, 
+            x => scala.math.log(CNDF((x-0.6)/0.03)+1E-6))
       }
   })
   
@@ -121,7 +135,8 @@ object ColorFactor extends App {
   class MHColorSampler(model: Model) extends MHSampler[ColorVariable](model)(new scala.util.Random) {
     def propose(context:ColorVariable)(implicit d:DiffList) : Double = {
       val origScore = model.currentScore(context)
-      context.set(randomColor())(d)
+      val mu = new scala.util.Random
+      context.set(randomColor(context.value, mu.nextDouble()))(d)
       val currScore = model.currentScore(context)
       currScore - origScore
     }

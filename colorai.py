@@ -93,6 +93,9 @@ class AITokenFormatter(Formatter):
             pttype = None
             pvalue = None
             pdict = {}
+            from pygments.token import Token
+
+            TOKEN_DICT[Token] = (0,0)
             for ttype, value in tokensource:
                 pdict[ttype] = 1 # check the presence of ttype of current line
 
@@ -101,7 +104,6 @@ class AITokenFormatter(Formatter):
                 else: 
                     TOKEN_DICT[ttype] = (len(value), 0)
 
-                from pygments.token import Token
                 
                 if ttype == Token.Text.Whitespace:
                     if value == '\n':
@@ -110,6 +112,7 @@ class AITokenFormatter(Formatter):
                                 TOKENS_DICT[pttype].append(len(pvalue))
                             else:
                                 TOKENS_DICT[pttype] = [len(pvalue)]                        
+                            TOKEN_DICT[Token] = (0, TOKEN_DICT[Token][1] + 1) # count total non-empty lines
                         pttype = None
                         pvalue = None
                         for ttype in pdict:
@@ -222,7 +225,8 @@ def main():
     for key, val in TOKENS_DICT.items():
         import numpy, math
         arrayOfTokens = numpy.log2(TOKENS_DICT[key])
-        DataUnary[str(key)] = (math.log(TOKEN_DICT[key][0])/math.log(2), TOKEN_DICT[key][1], numpy.mean(arrayOfTokens), numpy.median(arrayOfTokens), numpy.std(arrayOfTokens))
+        DataUnary[str(key)] = (TOKEN_DICT[key][0], TOKEN_DICT[key][1], numpy.mean(arrayOfTokens), numpy.median(arrayOfTokens), numpy.std(arrayOfTokens))
+    DataUnary[str(Token)] = (0, TOKEN_DICT[Token][1], 0, 0, 0)
     for key, val in TOKEND_DICT.items():
         DataPair[str(key)] = val
         
