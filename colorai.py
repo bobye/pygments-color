@@ -238,7 +238,7 @@ def main():
     fileoutput.write(dataString)
     fileoutput.close()
 
-    os.system("cd color; java -jar target/color-*-SNAPSHOT.jar; cd ..")
+    #os.system("cd color; java -jar target/color-*-SNAPSHOT.jar; cd ..")
     #import time
     #time.sleep(1) # wait theme.json to be sync
 

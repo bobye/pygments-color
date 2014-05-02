@@ -15,4 +15,12 @@ object Function {
 
     return (1.0 - neg) * y + neg * (1.0 - y);    
   }
+  
+  def BETA(a: Double, b: Double)(xInput: Double): Double = {
+    pow(xInput, a - 1) * pow(1 - xInput, b - 1)
+  }
+  
+  def GAMMA(k: Double, theta: Double)(xInput: Double): Double = {
+    pow(xInput, k-1) * exp ( - xInput / theta )
+  }
 }
