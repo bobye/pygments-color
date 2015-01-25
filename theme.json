@@ -1,0 +1,23 @@
+{
+  "Token.Literal.String.Doc": [177, 226, 98],
+  "Token.Literal.String.Escape": [190, 245, 124],
+  "Token.Comment": [147, 213, 34],
+  "Token.Name.Exception": [163, 167, 160],
+  "Token.Operator": [129, 144, 136],
+  "Token.Operator.Word": [204, 222, 224],
+  "Token.Name.Namespace": [139, 146, 126],
+  "Token.Literal.String.Interpol": [166, 214, 106],
+  "Token.Name.Function": [243, 113, 2],
+  "Token.Name": [235, 251, 239],
+  "Token.Literal.Number.Integer": [210, 228, 101],
+  "Token.Keyword": [214, 157, 232],
+  "Token.Punctuation": [137, 151, 136],
+  "Token.Name.Builtin.Pseudo": [203, 231, 220],
+  "Token.Name.Builtin": [135, 144, 129],
+  "Token.Literal.String": [93, 142, 36],
+  "Token.Keyword.Namespace": [176, 120, 194],
+  "Token.Literal": [225, 251, 146],
+  "Token": [0, 0, 0],
+  "Token.Name.Class": [138, 143, 137],
+  "Token.Literal.Number": [128, 156, 50]
+}

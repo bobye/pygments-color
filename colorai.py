@@ -241,9 +241,9 @@ def main():
     fileoutput.write(dataString)
     fileoutput.close()
 
-    #os.system("cd color; java -jar target/color-*-SNAPSHOT.jar; cd ..")
-    #import time
-    #time.sleep(1) # wait theme.json to be sync
+    os.system("cd color; java -jar target/color-*-SNAPSHOT.jar; cd ..")
+    import time
+    time.sleep(1) # wait theme.json to be sync
 
     renderHtmlFile = open('out.html','w')
     highlight(codeSample, lexer2, HtmlFormatter(full="True", style=make_MRFStyle()), renderHtmlFile)
